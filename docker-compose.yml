@@ -1,0 +1,19 @@
+services:
+  registry:
+    image: registry:2
+    container_name: docker-registry
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+    restart: unless-stopped
+
+  picopark:
+    build: ./Game
+    container_name: picopark
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  registry-data:
