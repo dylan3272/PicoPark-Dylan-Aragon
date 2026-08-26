@@ -1,15 +1,9 @@
-// ========================================
-// PICO PARK CLONE - FINAL VERSION
-// ========================================
-
 const CONFIG = {
   TAMANO_BLOQUE: 50,
   VELOCIDAD_JUGADOR: 220,
   SALTO_FUERZA: 480,
   GRAVEDAD: 950,
-  COLORES_JUGADORES: [
-    0xff4444, 0x44ff44, 0x4488ff, 0xffff44
-  ],
+  COLORES_JUGADORES: [0xff0055, 0x00ffcc, 0xb700ff, 0xffea00],
   MAX_JUGADORES: 4, 
   TIEMPO_VICTORIA: 2500, 
   TOTAL_NIVELES: 2,
@@ -21,33 +15,32 @@ let nivelActual = 1;
 
 const mapaNivel1 = [
   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0],
   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
   [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,9,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0],
-  [1,1,1,1,0,0,1,0,0,1,0,0,1,0,0,1,1,1,1,10,10,10,10,10,10,10,1,1,1,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0],
+  [0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], 
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,10,10,10,10,10,10,10,10,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
 ];
 
-// MAPA 2: Botón de vuelta en su lugar, puerta y base ajustadas.
 const mapaNivel2 = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0], // Puerta
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0], // Llave en 14, Plataforma en 46
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], // Botón en 37
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], // Plataforma botón
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [1,1,1,1,0,0,1,0,0,1,0,0,1,1,1,1,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,1,1,1,1,0,0,0,0,11,11,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], // Trampolines
-  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1],
+  [1,1,1,1,1,1,1,0,0,11,11,11,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,10,10,10,10,10,10,10,10,10,10,10,10,10,10,0,0,0,0,0,0,0,0,0],
+  [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
 ];
 
 function obtenerMapaActual() {
@@ -77,6 +70,7 @@ class SceneGame extends Phaser.Scene {
     this.botones = null;
     this.puentes = null;
     this.trampolines = null; 
+    this.cajas = null;
     this.grupoJugadores = null;
     this.txtVictoria = null;
     this.puertaAbierta = false;
@@ -84,80 +78,94 @@ class SceneGame extends Phaser.Scene {
     contadorColores = 0;
   }
 
-  crearTextura(key, col1, col2, col3, w, h, esPiso) {
+  crearTextura(key, w, h) {
     if (this.textures.exists(key)) return; 
-
     const canvas = this.textures.createCanvas(key, w, h);
     if (!canvas) return;
     const ctx = canvas.context;
 
     if (key === "ground") {
-      ctx.fillStyle = "#8D6E63"; 
+      ctx.fillStyle = "#1e272e"; 
       ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = "#7CB342"; 
-      ctx.fillRect(0, 0, w, 12);
-      ctx.fillStyle = "#689F38"; 
-      ctx.fillRect(0, 12, w, 3);
+      ctx.fillStyle = "#ff3f34";
+      ctx.fillRect(0, 0, w, 2); ctx.fillRect(0, h - 2, w, 2);
+      ctx.fillRect(0, 0, 2, h); ctx.fillRect(w - 2, 0, 2, h);
     } 
     else if (key === "water") {
-      ctx.fillStyle = "#29B6F6"; 
+      // Fondo oscuro del foso
+      ctx.fillStyle = "#0a0a0a"; 
       ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = "#03A9F4"; 
-      ctx.fillRect(0, 0, w, 8);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-      ctx.fillRect(10, 3, 10, 2);
-      ctx.fillRect(35, 3, 5, 2);
-    } 
-    else if (key === "door") {
-      ctx.fillStyle = "#5D4037"; 
-      ctx.fillRect(5, 5, 40, 75);
-      ctx.fillStyle = "#795548"; 
-      ctx.fillRect(10, 10, 30, 70);
-      ctx.fillStyle = "#D7CCC8"; 
-      ctx.fillRect(32, 45, 8, 4);
-    } 
-    else if (key === "doorOpen") {
-      ctx.fillStyle = "#5D4037"; 
-      ctx.fillRect(5, 5, 40, 75);
-      ctx.fillStyle = "#111111"; 
-      ctx.fillRect(10, 10, 30, 70);
-      ctx.fillStyle = "#222222"; 
-      ctx.fillRect(10, 60, 30, 8);
-      ctx.fillStyle = "#333333"; 
-      ctx.fillRect(10, 68, 30, 12);
-    } 
-    else if (key === "button") {
-      ctx.fillStyle = "#c0392b"; 
-      ctx.fillRect(5, 40, 40, 10);
-      ctx.fillStyle = "#e74c3c"; 
-      ctx.fillRect(10, 35, 30, 5);
-    }
-    else if (key === "bridge") {
-      ctx.fillStyle = "#f39c12"; 
-      ctx.fillRect(0, 0, w, 20);
-      ctx.fillStyle = "#f1c40f"; 
-      ctx.fillRect(2, 2, w-4, 16);
-    }
-    else if (key === "trampoline") {
-      ctx.fillStyle = "#7f8c8d"; 
-      ctx.fillRect(5, 30, 40, 20);
-      ctx.fillStyle = "#e67e22"; 
-      ctx.fillRect(10, 25, 30, 5);
-      ctx.fillStyle = "#d35400"; 
-      ctx.fillRect(10, 28, 30, 2);
-    }
-    else if (key === "cloud") { 
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(25, 25, 18, 0, Math.PI * 2);
-      ctx.arc(12, 32, 12, 0, Math.PI * 2);
-      ctx.arc(38, 32, 12, 0, Math.PI * 2);
+      
+      // Base de ácido verde tóxico
+      ctx.fillStyle = "#39ff14"; 
+      ctx.fillRect(0, 12, w, h - 12);
+      
+      // Borde brillante / espuma tóxica en la superficie
+      ctx.fillStyle = "#ccff00";
+      ctx.fillRect(0, 12, w, 4);
+
+      // Burbujas de ácido flotando
+      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+      
+      // Burbuja 1
+      ctx.beginPath(); 
+      ctx.arc(15, 22, 3, 0, Math.PI * 2); 
+      ctx.fill();
+      
+      // Burbuja 2
+      ctx.beginPath(); 
+      ctx.arc(35, 32, 4, 0, Math.PI * 2); 
+      ctx.fill();
+      
+      // Burbuja 3
+      ctx.beginPath(); 
+      ctx.arc(22, 42, 2, 0, Math.PI * 2); 
       ctx.fill();
     }
-    else {
-      ctx.fillStyle = col1; ctx.fillRect(0, 0, w, h);
+    else if (key === "door") {
+      ctx.fillStyle = "#485460"; 
+      ctx.fillRect(5, 5, 40, 75);
+      ctx.fillStyle = "#1e272e"; 
+      ctx.fillRect(10, 10, 30, 70);
+      ctx.fillStyle = "#ff3f34";
+      ctx.fillRect(15, 15, 20, 5);
+    } 
+    else if (key === "doorOpen") {
+      ctx.fillStyle = "#485460"; 
+      ctx.fillRect(5, 5, 40, 75);
+      ctx.fillStyle = "#000000"; 
+      ctx.fillRect(10, 10, 30, 70);
+      ctx.fillStyle = "#0be881";
+      ctx.fillRect(15, 15, 20, 5);
+    } 
+    else if (key === "button") {
+      ctx.fillStyle = "#333"; 
+      ctx.fillRect(5, 35, 40, 15);
+      ctx.fillStyle = "#ffdd59"; 
+      ctx.fillRect(10, 30, 30, 5);
     }
-    
+    else if (key === "bridge") {
+      ctx.fillStyle = "rgba(15, 185, 177, 0.3)";
+      ctx.fillRect(0, 5, w, 10);
+      ctx.fillStyle = "#0fb9b1"; 
+      ctx.fillRect(0, 3, w, 2);
+      ctx.fillRect(0, 15, w, 2);
+    }
+    else if (key === "trampoline") {
+      ctx.fillStyle = "#222"; 
+      ctx.fillRect(5, 30, 40, 20);
+      ctx.fillStyle = "#0be881"; 
+      ctx.fillRect(10, 25, 30, 5);
+    }
+    else if (key === "caja") {
+      ctx.fillStyle = "#808e9b"; 
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#1e272e";
+      ctx.fillRect(2, 2, w-4, h-4);
+      ctx.fillStyle = "#ffd32a";
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(w, h); ctx.lineWidth=8; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(w,0); ctx.lineTo(0, h); ctx.lineWidth=8; ctx.stroke();
+    }
     canvas.refresh();
   }
 
@@ -165,44 +173,47 @@ class SceneGame extends Phaser.Scene {
     if (this.textures.exists("player")) return;
     const canvas = this.textures.createCanvas("player", 40, 40);
     const ctx = canvas.context;
-    ctx.fillStyle = "#FFFFFF";
+    ctx.fillStyle = "#222222"; 
     ctx.fillRect(0, 0, 40, 40);
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(8, 10, 6, 8); ctx.fillRect(26, 10, 6, 8); ctx.fillRect(15, 25, 10, 4);
+    ctx.fillStyle = "#ffffff"; 
+    ctx.fillRect(5, 8, 30, 12);
     canvas.refresh();
   }
 
-  crearTexturaLlave() {
-    if (this.textures.exists("key")) return;
-    const canvas = this.textures.createCanvas("key", 30, 30);
+  crearTexturaNucleo() {
+    if (this.textures.exists("nucleo")) return;
+    const canvas = this.textures.createCanvas("nucleo", 30, 30);
     const ctx = canvas.context;
-    ctx.fillStyle = "#f1c40f";
-    ctx.fillRect(5, 10, 25, 8); ctx.fillRect(5, 5, 10, 18);
-    ctx.fillStyle = "#87CEEB"; ctx.fillRect(7, 9, 6, 10);
-    ctx.fillStyle = "#f1c40f"; ctx.fillRect(22, 18, 4, 6); ctx.fillRect(16, 18, 4, 6);
+    ctx.fillStyle = "#d2dae2";
+    ctx.fillRect(5, 0, 20, 30);
+    ctx.fillStyle = "#0be881";
+    ctx.fillRect(8, 5, 14, 20);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(12, 10, 6, 10);
     canvas.refresh();
   }
 
   create() {
     this.resetEstado();
-    this.cameras.main.setBackgroundColor("#E1F5FE");
+    this.cameras.main.setBackgroundColor("#0a0a12"); 
 
-    this.crearTextura("ground", null, null, null, 50, 50, false);
-    this.crearTextura("water", null, null, null, 50, 50, false);
-    this.crearTextura("door", null, null, null, 50, 80, false);
-    this.crearTextura("doorOpen", null, null, null, 50, 80, false);
-    this.crearTextura("cloud", null, null, null, 50, 50, false);
-    this.crearTextura("button", null, null, null, 50, 50, false);
-    this.crearTextura("bridge", null, null, null, 50, 50, false);
-    this.crearTextura("trampoline", null, null, null, 50, 50, false);
+    this.crearTextura("ground", 50, 50);
+    this.crearTextura("water", 50, 50);
+    this.crearTextura("door", 50, 80);
+    this.crearTextura("doorOpen", 50, 80);
+    this.crearTextura("button", 50, 50);
+    this.crearTextura("bridge", 50, 50);
+    this.crearTextura("trampoline", 50, 50);
+    this.crearTextura("caja", 48, 48);
     this.crearTexturaJugador();
-    this.crearTexturaLlave();
+    this.crearTexturaNucleo();
 
     this.plataformas = this.physics.add.staticGroup();
     this.agua = this.physics.add.staticGroup();
     this.botones = this.physics.add.staticGroup();
     this.puentes = this.physics.add.staticGroup();
     this.trampolines = this.physics.add.staticGroup();
+    this.cajas = this.physics.add.group();
     this.grupoJugadores = this.physics.add.group();
 
     const mapaActual = obtenerMapaActual();
@@ -213,10 +224,10 @@ class SceneGame extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, mapaAncho, mapaAlto);
     this.cameras.main.setBounds(0, 0, mapaAncho, mapaAlto);
 
-    this.add.text(20, 20, `NIVEL ${nivelActual}`, { fontSize: "20px", fill: "#555", fontStyle: "bold" }).setScrollFactor(0);
+    this.add.text(20, 20, `NIVEL ${nivelActual}: SISTEMA DE SEGURIDAD`, { fontSize: "20px", fill: "#0fb9b1", fontStyle: "bold" }).setScrollFactor(0);
 
     this.txtVictoria = this.add
-      .text(400, 300, "", { fontSize: "48px", fill: "#00ff88", fontStyle: "bold", align: "center", stroke: "#000", strokeThickness: 8 })
+      .text(400, 300, "", { fontSize: "48px", fill: "#0be881", fontStyle: "bold", align: "center", stroke: "#000", strokeThickness: 8 })
       .setOrigin(0.5).setVisible(false).setScrollFactor(0).setDepth(100); 
 
     for (let y = 0; y < mapaActual.length; y++) {
@@ -228,34 +239,28 @@ class SceneGame extends Phaser.Scene {
         if (tipo === 1) this.plataformas.create(posX, posY, "ground");
         else if (tipo === 2) {
           const a = this.agua.create(posX, posY, "water");
-          a.body.setSize(50, 12); a.body.setOffset(0, 38);
+          a.body.setSize(50, 15); a.body.setOffset(0, 35); 
         } else if (tipo === 3) {
           this.llaveOriginalX = posX; this.llaveOriginalY = posY;
-          this.llave = this.physics.add.sprite(posX, posY, "key").setScale(0.8);
+          this.llave = this.physics.add.sprite(posX, posY, "nucleo").setScale(0.8);
           this.llave.body.allowGravity = false;
         } else if (tipo === 4) {
           this.puerta = this.physics.add.staticSprite(posX, posY - 15, "door").setScale(0.9);
           this.puerta.refreshBody();
-        } else if (tipo === 5) {
-          this.add.image(posX, posY, "cloud").setDepth(-10);
+        } else if (tipo === 6) {
+          const caja = this.cajas.create(posX, posY, "caja");
+          caja.setMass(1000);
+          caja.setDragX(10000);
+          caja.setBounce(0);
         } else if (tipo === 9) { 
           const btn = this.botones.create(posX, posY, "button");
-          btn.body.setSize(30, 15);
-          btn.body.setOffset(10, 35);
+          btn.body.setSize(40, 15); btn.body.setOffset(5, 35);
         } else if (tipo === 10) { 
           const pte = this.puentes.create(posX, posY - 15, "bridge");
-          pte.body.setSize(50, 20);
-          pte.body.setOffset(0, 0);
-          pte.body.enable = false;
-          pte.setAlpha(0.3);
+          pte.body.setSize(50, 20); pte.body.enable = false; pte.setAlpha(0.2);
         } else if (tipo === 11) { 
           const tramp = this.trampolines.create(posX, posY, "trampoline");
-          tramp.body.setSize(50, 25);
-          tramp.body.setOffset(0, 25);
-          tramp.body.enable = true; 
-          
-          const txtCount = this.add.text(posX, posY - 30, "", { fontSize: "28px", fill: "#FFF", fontStyle: "bold", stroke: "#000", strokeThickness: 5 }).setOrigin(0.5);
-          tramp.setData("txt", txtCount);
+          tramp.body.setSize(50, 25); tramp.body.setOffset(0, 25);
           tramp.setData("estado", "idle"); 
         }
       }
@@ -264,9 +269,12 @@ class SceneGame extends Phaser.Scene {
     this.physics.add.collider(this.grupoJugadores, this.plataformas);
     this.physics.add.collider(this.grupoJugadores, this.puentes);
     this.physics.add.collider(this.grupoJugadores, this.trampolines);
-
     this.physics.add.collider(this.grupoJugadores, this.grupoJugadores);
+    this.physics.add.collider(this.grupoJugadores, this.cajas);
+    this.physics.add.collider(this.cajas, this.plataformas);
+    
     this.physics.add.overlap(this.grupoJugadores, this.agua, this.respawnEquipo, null, this);
+    this.physics.add.overlap(this.cajas, this.agua, this.respawnEquipo, null, this);
 
     if (this.llave) {
       this.physics.add.overlap(this.grupoJugadores, this.llave, this.agarrarLlave, null, this);
@@ -290,10 +298,7 @@ class SceneGame extends Phaser.Scene {
       const player = this.grupoJugadores.create(100 + cant * 30, 250, "player");
       player.setData("id", idDelSocket);
       player.setTint(color).setCollideWorldBounds(true).setScale(0.9);
-      
-      // Movimiento con fricción para no glitchear la torre humana
       player.body.setSize(40, 40);
-      player.body.setOffset(0, 0);
       player.setDragX(2500); 
       player.setMaxVelocity(CONFIG.VELOCIDAD_JUGADOR, 1500);
 
@@ -304,10 +309,6 @@ class SceneGame extends Phaser.Scene {
         upPressedLastFrame: false,
       };
       contadorColores++;
-    });
-
-    socket.off("servidorReiniciado").on("servidorReiniciado", () => {
-      nivelActual = 1; this.scene.restart();
     });
 
     socket.emit("pedirJugadoresConectados");
@@ -327,30 +328,13 @@ class SceneGame extends Phaser.Scene {
 
   respawnEquipo() {
     if (this.nivelSuperado) return;
-    let i = 0;
-    Object.values(this.jugadoresSprites).forEach((j) => {
-      j.sprite.setPosition(100 + i * 25, 300).setVelocity(0, 0).setVisible(true);
-      j.adentro = false; j.upPressedLastFrame = false; j.sprite.body.allowGravity = true;
-      i++;
-    });
-    this.jugadoresAdentro.clear();
-    this.equipoTieneLlave = false; this.puertaAbierta = false; this.jugadorConLlaveId = null;
-    
-    this.trampolines.getChildren().forEach(tramp => {
-      const timerEvent = tramp.getData("timerEvent");
-      if (timerEvent) timerEvent.remove();
-      tramp.setData("estado", "idle");
-      tramp.getData("txt").setText("");
-    });
-
-    if (this.llave) { this.llave.setVisible(true).setPosition(this.llaveOriginalX, this.llaveOriginalY).body.enable = true; }
-    if (this.puerta) { this.puerta.setTexture("door").refreshBody(); }
+    this.scene.restart();
   }
 
   agarrarLlave(a, b) {
     if (this.equipoTieneLlave) return;
     const jSprite = a.texture.key === "player" ? a : b;
-    const lSprite = a.texture.key === "key" ? a : b;
+    const lSprite = a.texture.key === "nucleo" ? a : b;
     this.equipoTieneLlave = true;
     this.jugadorConLlaveId = jSprite.getData("id");
     lSprite.setVisible(false).body.enable = false;
@@ -359,16 +343,10 @@ class SceneGame extends Phaser.Scene {
   victoria() {
     if (this.nivelSuperado) return;
     this.nivelSuperado = true;
-
     this.plataformas.clear(true, true);
-    this.agua.clear(true, true);
-    this.botones.clear(true, true);
-    this.puentes.clear(true, true);
-    this.trampolines.clear(true, true);
-    if (this.llave) this.llave.destroy();
-    if (this.puerta) this.puerta.destroy();
-
-    const msj = nivelActual < CONFIG.TOTAL_NIVELES ? `¡NIVEL ${nivelActual} COMPLETADO!\nSiguiente nivel...` : `¡JUEGO COMPLETADO! 🎉`;
+    this.cajas.clear(true, true);
+    
+    const msj = nivelActual < CONFIG.TOTAL_NIVELES ? `¡SECTOR BYPASSEADO!\nSiguiente sector...` : `¡HACKEO EXITOSO! 🎉`;
     this.txtVictoria.setText(msj).setVisible(true);
 
     this.time.delayedCall(CONFIG.TIEMPO_VICTORIA, () => {
@@ -397,70 +375,47 @@ class SceneGame extends Phaser.Scene {
       if (portador && !portador.adentro) this.llave.setPosition(portador.sprite.x, portador.sprite.y - 35);
     }
 
+    this.cajas.getChildren().forEach(caja => {
+      let empujeDerecha = 0;
+      let empujeIzquierda = 0;
+
+      for (const [id, j] of jugadores) {
+        const p = j.sprite;
+        if (p.body.touching.right && caja.body.touching.left && j.controles.right) empujeDerecha++;
+        if (p.body.touching.left && caja.body.touching.right && j.controles.left) empujeIzquierda++;
+      }
+
+      if (empujeDerecha >= 2) {
+        caja.setVelocityX(100);
+      } else if (empujeIzquierda >= 2) {
+        caja.setVelocityX(-100);
+      } else {
+        caja.setVelocityX(0);
+      }
+    });
+
     let algunBotonPisado = false; 
-    
     this.botones.getChildren().forEach(btn => {
       let pisado = false;
-      for (const [id, j] of jugadores) {
-        if (!j.adentro && Phaser.Geom.Intersects.RectangleToRectangle(j.sprite.getBounds(), btn.getBounds())) {
+      this.cajas.getChildren().forEach(caja => {
+        if (Phaser.Geom.Intersects.RectangleToRectangle(caja.getBounds(), btn.getBounds())) {
           pisado = true;
-          break;
         }
-      }
+      });
       
       if (pisado) {
-        btn.setTint(0xaaaaaa); 
+        btn.setTint(0x777777); 
         algunBotonPisado = true;
       } else {
         btn.clearTint();
       }
     });
 
-    // NIVEL 1: Los puentes se encienden si se está pisando el botón
     this.puentes.getChildren().forEach(pte => {
       if (algunBotonPisado) {
         pte.body.enable = true; pte.setAlpha(1);
       } else {
-        pte.body.enable = false; pte.setAlpha(0.3);
-      }
-    });
-
-    // NIVEL 2: El botón inicia la cuenta del trampolín UNA sola vez. ¡Y podés bajarte a esperar al trampolín!
-    this.trampolines.getChildren().forEach(tramp => {
-      if (algunBotonPisado && tramp.getData("estado") === "idle") {
-        tramp.setData("estado", "contando"); // Bloqueamos para que no se dupliquen relojes
-        let contador = 5; 
-        const txt = tramp.getData("txt");
-        txt.setText(contador);
-
-        const timerEvent = this.time.addEvent({
-          delay: 1000,
-          repeat: 4, 
-          callback: () => {
-            contador--;
-            if (contador > 0) {
-              txt.setText(contador);
-            } else {
-              txt.setText(""); 
-              tramp.setData("estado", "disparado");
-              
-              Object.values(this.jugadoresSprites).forEach(j => {
-                const p = j.sprite;
-                const distHorizontal = Math.abs(p.x - tramp.x);
-                const distVertical = tramp.y - p.y;
-                if (distHorizontal < 45 && distVertical > 0 && distVertical < 70) {
-                  p.setVelocityY(-850); 
-                }
-              });
-
-              this.time.delayedCall(1500, () => {
-                tramp.setData("estado", "idle"); // Vuelve a estar disponible tras 1.5s
-              });
-            }
-          }
-        });
-        // Lo guardamos por las dudas (ahora ya no se destruye al soltar el botón)
-        tramp.setData("timerEvent", timerEvent); 
+        pte.body.enable = false; pte.setAlpha(0.2);
       }
     });
 
@@ -480,7 +435,13 @@ class SceneGame extends Phaser.Scene {
       else if (j.controles.right) p.setAccelerationX(2500);
       else p.setAccelerationX(0);
 
-      if (j.controles.jump && p.body.blocked.down) { p.setVelocityY(-CONFIG.SALTO_FUERZA); j.controles.jump = false; }
+      if (j.controles.jump && p.body.blocked.down) {
+        if (this.equipoTieneLlave && this.jugadorConLlaveId === id) {
+        } else {
+          p.setVelocityY(-CONFIG.SALTO_FUERZA);
+        }
+        j.controles.jump = false;
+      }
 
       if (this.puerta) {
         const dist = Math.abs(p.x - this.puerta.x) < 40 && Math.abs(p.y - this.puerta.y) < 60;
