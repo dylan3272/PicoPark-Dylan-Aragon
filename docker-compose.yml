@@ -10,7 +10,7 @@ services:
 
   picopark:
     build: ./Game
-    container_name: picopark
+    container_name: picopark-DylanAragon
     ports:
       - "3000:3000"
     restart: unless-stopped
