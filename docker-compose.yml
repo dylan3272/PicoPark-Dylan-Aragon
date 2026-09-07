@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   picopark-app:
     image: dylanaragon/picopark:latest
@@ -8,6 +7,18 @@ services:
     restart: unless-stopped
     networks:
       - picopark-network
+
+  gamepad-app:
+    build:
+      context: ./GamePad
+      dockerfile: Dockerfile
+    container_name: gamepad-prod
+    ports:
+      - "3002:3000"
+    restart: unless-stopped
+    networks:
+      - picopark-network
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -17,6 +28,7 @@ services:
       - "9090:9090"
     networks:
       - picopark-network
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -26,6 +38,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
       - picopark-network
+
 networks:
   picopark-network:
     driver: bridge
