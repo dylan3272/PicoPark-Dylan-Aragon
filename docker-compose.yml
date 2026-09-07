@@ -1,19 +1,31 @@
+version: '3.8'
 services:
-  registry:
-    image: registry:2
-    container_name: docker-registry
-    ports:
-      - "5000:5000"
-    volumes:
-      - registry-data:/var/lib/registry
-    restart: unless-stopped
-
-  picopark:
-    build: ./Game
-    container_name: picopark-DylanAragon
+  picopark-app:
+    image: dylanaragon/picopark:latest
+    container_name: picopark-prod
     ports:
       - "3000:3000"
     restart: unless-stopped
-
-volumes:
-  registry-data:
+    networks:
+      - picopark-network
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - picopark-network
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - picopark-network
+networks:
+  picopark-network:
+    driver: bridge
