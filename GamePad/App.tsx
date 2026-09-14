@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { StatusBar } from "expo-status-bar";
+
+// 1. Importación de Hooks (Lógica)
+import useConexionAlServidor from "@/src/hooks/useConexionAlServidor";
+import useControlesDeGamepad from "@/src/hooks/useControlesDeGamepad";
+import useEscanerQR from "@/src/hooks/useEscanerQR";
+
+// 2. Importación de Componentes (Vistas)
 import ContenedorDeGamepad from "@/src/componentes/contenedores/ContenedorDeGamepad";
 import FormularioDeConexion from "@/src/componentes/contenidos/FormularioDeConexion";
 import PantallaDeEscaneoQR from "@/src/componentes/contenidos/PantallaDeEscaneoQR";
-import useConexionAlServidor from "@/src/hooks/useConexionAlServidor";
-import useEscanerQR from "@/src/hooks/useEscanerQR";
-import useControlesDeGamepad from "@/src/hooks/useControlesDeGamepad";
 
-const App = () => {
+export default function App() {
+  // --- A. Estado de Conexión ---
   const {
     estaConectado,
     direccionIp,
@@ -17,14 +22,7 @@ const App = () => {
     enviarEventoDeControl,
   } = useConexionAlServidor();
 
-  const handleIpEscaneada = (ip: string) => {
-    setDireccionIp(ip);
-    conectarAlServidor(ip);
-  };
-
-  const { estaEscaneando, abrirEscanerQR, cerrarEscanerQR, handleQREscaneado } =
-    useEscanerQR(handleIpEscaneada);
-
+  // --- B. Configuración del Gamepad ---
   const {
     layoutDpad,
     layoutBotonSalto,
@@ -36,50 +34,68 @@ const App = () => {
     procesarToques,
   } = useControlesDeGamepad(
     (tecla) => enviarEventoDeControl("keydown", tecla),
-    (tecla) => enviarEventoDeControl("keyup", tecla),
+    (tecla) => enviarEventoDeControl("keyup", tecla)
   );
 
-  if (!estaConectado && estaEscaneando) {
-    return (
-      <>
-        <StatusBar hidden />
+  // --- C. Lógica del Escáner QR ---
+  const handleIpEscaneada = useCallback((ip) => {
+    setDireccionIp(ip);
+    conectarAlServidor(ip);
+  }, [setDireccionIp, conectarAlServidor]);
+
+  const { 
+    estaEscaneando, 
+    abrirEscanerQR, 
+    cerrarEscanerQR, 
+    handleQREscaneado 
+  } = useEscanerQR(handleIpEscaneada);
+
+
+  // --- D. Sistema de Enrutamiento Interno ---
+  const renderizarPantallaActiva = () => {
+    
+    // Escenario 1: El jugador ya está conectado al juego
+    if (estaConectado) {
+      return (
+        <ContenedorDeGamepad
+          onSalir={desconectarDelServidor}
+          onCapturarLayoutDpad={capturarLayoutDeZona(layoutDpad)}
+          onCapturarLayoutArriba={capturarLayoutDeZona(layoutBotonArriba)}
+          onCapturarLayoutAbajo={capturarLayoutDeZona(layoutBotonAbajo)}
+          onCapturarLayoutIzquierda={capturarLayoutDeZona(layoutBotonIzquierda)}
+          onCapturarLayoutDerecha={capturarLayoutDeZona(layoutBotonDerecha)}
+          onCapturarLayoutSalto={capturarLayoutDeZona(layoutBotonSalto)}
+          onProcesarToques={procesarToques}
+        />
+      );
+    }
+
+    // Escenario 2: El usuario abrió la cámara para escanear
+    if (estaEscaneando) {
+      return (
         <PantallaDeEscaneoQR
           onQREscaneado={handleQREscaneado}
           onCancelar={cerrarEscanerQR}
         />
-      </>
-    );
-  }
+      );
+    }
 
-  if (!estaConectado) {
+    // Escenario 3 (Por defecto): Pantalla de inicio pidiendo IP
     return (
-      <>
-        <StatusBar hidden />
-        <FormularioDeConexion
-          direccionIp={direccionIp}
-          onCambiarIp={setDireccionIp}
-          onConectarConIp={() => conectarAlServidor()}
-          onAbrirEscanerQR={abrirEscanerQR}
-        />
-      </>
+      <FormularioDeConexion
+        direccionIp={direccionIp}
+        onCambiarIp={setDireccionIp}
+        onConectarConIp={() => conectarAlServidor()}
+        onAbrirEscanerQR={abrirEscanerQR}
+      />
     );
-  }
+  };
 
+  // --- E. Renderizado Principal ---
   return (
     <>
-      <StatusBar hidden />
-      <ContenedorDeGamepad
-        onSalir={desconectarDelServidor}
-        onCapturarLayoutDpad={capturarLayoutDeZona(layoutDpad)}
-        onCapturarLayoutArriba={capturarLayoutDeZona(layoutBotonArriba)}
-        onCapturarLayoutAbajo={capturarLayoutDeZona(layoutBotonAbajo)}
-        onCapturarLayoutIzquierda={capturarLayoutDeZona(layoutBotonIzquierda)}
-        onCapturarLayoutDerecha={capturarLayoutDeZona(layoutBotonDerecha)}
-        onCapturarLayoutSalto={capturarLayoutDeZona(layoutBotonSalto)}
-        onProcesarToques={procesarToques}
-      />
+      <StatusBar hidden={true} />
+      {renderizarPantallaActiva()}
     </>
   );
-};
-
-export default App;
+}

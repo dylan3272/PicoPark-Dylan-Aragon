@@ -1,14 +1,3 @@
-const CONFIG = {
-  TAMANO_BLOQUE: 50,
-  VELOCIDAD_JUGADOR: 220,
-  SALTO_FUERZA: 480,
-  GRAVEDAD: 950,
-  COLORES_JUGADORES: [0xff0055, 0x00ffcc, 0xb700ff, 0xffea00],
-  MAX_JUGADORES: 4, 
-  TIEMPO_VICTORIA: 2500, 
-  TOTAL_NIVELES: 2,
-};
-
 let socket = io({ query: { tipo: "pantalla" } });
 let contadorColores = 0;
 let nivelActual = 1;
@@ -43,6 +32,17 @@ const mapaNivel2 = [
   [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
 ];
 
+const CONFIG = {
+  TAMANO_BLOQUE: 50,
+  VELOCIDAD_JUGADOR: 220,
+  SALTO_FUERZA: 480,
+  GRAVEDAD: 950,
+  COLORES_JUGADORES: [0xff0055, 0x00ffcc, 0xb700ff, 0xffea00],
+  MAX_JUGADORES: 4, 
+  TIEMPO_VICTORIA: 2500, 
+  TOTAL_NIVELES: 2,
+};
+
 function obtenerMapaActual() {
   if (nivelActual === 1) return mapaNivel1;
   if (nivelActual === 2) return mapaNivel2;
@@ -56,141 +56,155 @@ class SceneGame extends Phaser.Scene {
     this.resetEstado();
   }
 
-  resetEstado() {
-    this.jugadoresSprites = {};
-    this.equipoTieneLlave = false;
-    this.jugadorConLlaveId = null;
-    this.nivelSuperado = false;
-    this.llaveOriginalX = 0;
-    this.llaveOriginalY = 0;
-    this.llave = null;
-    this.puerta = null;
-    this.plataformas = null;
-    this.agua = null;
-    this.botones = null;
-    this.puentes = null;
-    this.trampolines = null; 
-    this.cajas = null;
-    this.grupoJugadores = null;
-    this.txtVictoria = null;
-    this.puertaAbierta = false;
-    this.jugadoresAdentro = new Set();
-    contadorColores = 0;
+  update() {
+    if (!this.jugadoresSprites || this.nivelSuperado) return;
+    const jugadores = Object.entries(this.jugadoresSprites);
+    const totalJugadores = jugadores.length;
+    if (totalJugadores === 0) return;
+
+    const afuera = jugadores.filter(([, j]) => !j.adentro);
+    if (afuera.length > 0) {
+      const sumaX = afuera.reduce((s, [, j]) => s + j.sprite.x, 0);
+      const mapAncho = obtenerMapaActual()[0].length * CONFIG.TAMANO_BLOQUE;
+      const targetX = Phaser.Math.Clamp(sumaX / afuera.length - 400, 0, mapAncho - 800);
+      this.cameras.main.scrollX += (targetX - this.cameras.main.scrollX) * 0.12;
+    }
+
+    if (this.equipoTieneLlave && this.llave && this.llave.visible && !this.puertaAbierta) {
+      const portador = this.jugadoresSprites[this.jugadorConLlaveId];
+      if (portador && !portador.adentro) this.llave.setPosition(portador.sprite.x, portador.sprite.y - 35);
+    }
+
+    this.cajas.getChildren().forEach(caja => {
+      let empujeDerecha = 0;
+      let empujeIzquierda = 0;
+
+      for (const [id, j] of jugadores) {
+        const p = j.sprite;
+        if (p.body.touching.right && caja.body.touching.left && j.controles.right) empujeDerecha++;
+        if (p.body.touching.left && caja.body.touching.right && j.controles.left) empujeIzquierda++;
+      }
+
+      if (empujeDerecha >= 2) {
+        caja.setVelocityX(100);
+      } else if (empujeIzquierda >= 2) {
+        caja.setVelocityX(-100);
+      } else {
+        caja.setVelocityX(0);
+      }
+    });
+
+    let algunBotonPisado = false; 
+    this.botones.getChildren().forEach(btn => {
+      let pisado = false;
+      this.cajas.getChildren().forEach(caja => {
+        if (Phaser.Geom.Intersects.RectangleToRectangle(caja.getBounds(), btn.getBounds())) {
+          pisado = true;
+        }
+      });
+      
+      if (pisado) {
+        btn.setTint(0x777777); 
+        algunBotonPisado = true;
+      } else {
+        btn.clearTint();
+      }
+    });
+
+    this.puentes.getChildren().forEach(pte => {
+      if (algunBotonPisado) {
+        pte.body.enable = true; pte.setAlpha(1);
+      } else {
+        pte.body.enable = false; pte.setAlpha(0.2);
+      }
+    });
+
+    for (const [id, j] of jugadores) {
+      const p = j.sprite;
+      if (j.adentro) {
+        p.setPosition(this.puerta.x, this.puerta.y).setVelocity(0, 0);
+        p.body.allowGravity = false;
+        if (j.controles.down) {
+          j.adentro = false; p.setVisible(true); p.body.allowGravity = true;
+          this.jugadoresAdentro.delete(id);
+        }
+        continue; 
+      }
+
+      if (j.controles.left) p.setAccelerationX(-2500);
+      else if (j.controles.right) p.setAccelerationX(2500);
+      else p.setAccelerationX(0);
+
+      if (j.controles.jump && p.body.blocked.down) {
+        if (this.equipoTieneLlave && this.jugadorConLlaveId === id) {
+        } else {
+          p.setVelocityY(-CONFIG.SALTO_FUERZA);
+        }
+        j.controles.jump = false;
+      }
+
+      if (this.puerta) {
+        const dist = Math.abs(p.x - this.puerta.x) < 40 && Math.abs(p.y - this.puerta.y) < 60;
+        if (dist) {
+          if (!this.puertaAbierta && this.equipoTieneLlave) {
+            this.puertaAbierta = true; this.puerta.setTexture("doorOpen").refreshBody();
+          }
+          if (this.puertaAbierta && !j.adentro) {
+            if (j.controles.up && !j.upPressedLastFrame) {
+              j.adentro = true; p.setVisible(false); p.body.allowGravity = false; p.setVelocity(0,0);
+              this.jugadoresAdentro.add(id);
+            }
+            j.upPressedLastFrame = j.controles.up;
+          }
+        } else { j.upPressedLastFrame = false; }
+      }
+    }
+
+    if (this.puertaAbierta && totalJugadores > 0 && this.jugadoresAdentro.size >= totalJugadores) {
+      this.victoria();
+    }
   }
 
-  crearTextura(key, w, h) {
-    if (this.textures.exists(key)) return; 
-    const canvas = this.textures.createCanvas(key, w, h);
-    if (!canvas) return;
-    const ctx = canvas.context;
+  victoria() {
+    if (this.nivelSuperado) return;
+    this.nivelSuperado = true;
+    this.plataformas.clear(true, true);
+    this.cajas.clear(true, true);
+    
+    const msj = nivelActual < CONFIG.TOTAL_NIVELES ? `¡SECTOR BYPASSEADO!\nSiguiente sector...` : `¡HACKEO EXITOSO! 🎉`;
+    this.txtVictoria.setText(msj).setVisible(true);
 
-    if (key === "ground") {
-      ctx.fillStyle = "#1e272e"; 
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = "#ff3f34";
-      ctx.fillRect(0, 0, w, 2); ctx.fillRect(0, h - 2, w, 2);
-      ctx.fillRect(0, 0, 2, h); ctx.fillRect(w - 2, 0, 2, h);
-    } 
-    else if (key === "water") {
-      // Fondo oscuro del foso
-      ctx.fillStyle = "#0a0a0a"; 
-      ctx.fillRect(0, 0, w, h);
-      
-      // Base de ácido verde tóxico
-      ctx.fillStyle = "#39ff14"; 
-      ctx.fillRect(0, 12, w, h - 12);
-      
-      // Borde brillante / espuma tóxica en la superficie
-      ctx.fillStyle = "#ccff00";
-      ctx.fillRect(0, 12, w, 4);
-
-      // Burbujas de ácido flotando
-      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-      
-      // Burbuja 1
-      ctx.beginPath(); 
-      ctx.arc(15, 22, 3, 0, Math.PI * 2); 
-      ctx.fill();
-      
-      // Burbuja 2
-      ctx.beginPath(); 
-      ctx.arc(35, 32, 4, 0, Math.PI * 2); 
-      ctx.fill();
-      
-      // Burbuja 3
-      ctx.beginPath(); 
-      ctx.arc(22, 42, 2, 0, Math.PI * 2); 
-      ctx.fill();
-    }
-    else if (key === "door") {
-      ctx.fillStyle = "#485460"; 
-      ctx.fillRect(5, 5, 40, 75);
-      ctx.fillStyle = "#1e272e"; 
-      ctx.fillRect(10, 10, 30, 70);
-      ctx.fillStyle = "#ff3f34";
-      ctx.fillRect(15, 15, 20, 5);
-    } 
-    else if (key === "doorOpen") {
-      ctx.fillStyle = "#485460"; 
-      ctx.fillRect(5, 5, 40, 75);
-      ctx.fillStyle = "#000000"; 
-      ctx.fillRect(10, 10, 30, 70);
-      ctx.fillStyle = "#0be881";
-      ctx.fillRect(15, 15, 20, 5);
-    } 
-    else if (key === "button") {
-      ctx.fillStyle = "#333"; 
-      ctx.fillRect(5, 35, 40, 15);
-      ctx.fillStyle = "#ffdd59"; 
-      ctx.fillRect(10, 30, 30, 5);
-    }
-    else if (key === "bridge") {
-      ctx.fillStyle = "rgba(15, 185, 177, 0.3)";
-      ctx.fillRect(0, 5, w, 10);
-      ctx.fillStyle = "#0fb9b1"; 
-      ctx.fillRect(0, 3, w, 2);
-      ctx.fillRect(0, 15, w, 2);
-    }
-    else if (key === "trampoline") {
-      ctx.fillStyle = "#222"; 
-      ctx.fillRect(5, 30, 40, 20);
-      ctx.fillStyle = "#0be881"; 
-      ctx.fillRect(10, 25, 30, 5);
-    }
-    else if (key === "caja") {
-      ctx.fillStyle = "#808e9b"; 
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = "#1e272e";
-      ctx.fillRect(2, 2, w-4, h-4);
-      ctx.fillStyle = "#ffd32a";
-      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(w, h); ctx.lineWidth=8; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(w,0); ctx.lineTo(0, h); ctx.lineWidth=8; ctx.stroke();
-    }
-    canvas.refresh();
+    this.time.delayedCall(CONFIG.TIEMPO_VICTORIA, () => {
+      if (nivelActual < CONFIG.TOTAL_NIVELES) nivelActual++;
+      else nivelActual = 1;
+      this.scene.restart(); 
+    });
   }
 
-  crearTexturaJugador() {
-    if (this.textures.exists("player")) return;
-    const canvas = this.textures.createCanvas("player", 40, 40);
-    const ctx = canvas.context;
-    ctx.fillStyle = "#222222"; 
-    ctx.fillRect(0, 0, 40, 40);
-    ctx.fillStyle = "#ffffff"; 
-    ctx.fillRect(5, 8, 30, 12);
-    canvas.refresh();
+  agarrarLlave(a, b) {
+    if (this.equipoTieneLlave) return;
+    const jSprite = a.texture.key === "player" ? a : b;
+    const lSprite = a.texture.key === "nucleo" ? a : b;
+    this.equipoTieneLlave = true;
+    this.jugadorConLlaveId = jSprite.getData("id");
+    lSprite.setVisible(false).body.enable = false;
   }
 
-  crearTexturaNucleo() {
-    if (this.textures.exists("nucleo")) return;
-    const canvas = this.textures.createCanvas("nucleo", 30, 30);
-    const ctx = canvas.context;
-    ctx.fillStyle = "#d2dae2";
-    ctx.fillRect(5, 0, 20, 30);
-    ctx.fillStyle = "#0be881";
-    ctx.fillRect(8, 5, 14, 20);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(12, 10, 6, 10);
-    canvas.refresh();
+  respawnEquipo() {
+    if (this.nivelSuperado) return;
+    this.scene.restart();
+  }
+
+  handleInputGame(input) {
+    const id = input.idDelSocket;
+    const j = this.jugadoresSprites[id];
+    if (!j || this.nivelSuperado) return;
+    const activo = input.tipoDeEvento === "keydown";
+    if (input.teclaPresionada === "ArrowLeft")  j.controles.left  = activo;
+    if (input.teclaPresionada === "ArrowRight") j.controles.right = activo;
+    if (input.teclaPresionada === "Space")      j.controles.jump  = activo;
+    if (input.teclaPresionada === "ArrowUp")    j.controles.up    = activo;
+    if (input.teclaPresionada === "ArrowDown")  j.controles.down  = activo;
   }
 
   create() {
@@ -314,155 +328,134 @@ class SceneGame extends Phaser.Scene {
     socket.emit("pedirJugadoresConectados");
   }
 
-  handleInputGame(input) {
-    const id = input.idDelSocket;
-    const j = this.jugadoresSprites[id];
-    if (!j || this.nivelSuperado) return;
-    const activo = input.tipoDeEvento === "keydown";
-    if (input.teclaPresionada === "ArrowLeft")  j.controles.left  = activo;
-    if (input.teclaPresionada === "ArrowRight") j.controles.right = activo;
-    if (input.teclaPresionada === "Space")      j.controles.jump  = activo;
-    if (input.teclaPresionada === "ArrowUp")    j.controles.up    = activo;
-    if (input.teclaPresionada === "ArrowDown")  j.controles.down  = activo;
+  resetEstado() {
+    this.jugadoresSprites = {};
+    this.equipoTieneLlave = false;
+    this.jugadorConLlaveId = null;
+    this.nivelSuperado = false;
+    this.llaveOriginalX = 0;
+    this.llaveOriginalY = 0;
+    this.llave = null;
+    this.puerta = null;
+    this.plataformas = null;
+    this.agua = null;
+    this.botones = null;
+    this.puentes = null;
+    this.trampolines = null; 
+    this.cajas = null;
+    this.grupoJugadores = null;
+    this.txtVictoria = null;
+    this.puertaAbierta = false;
+    this.jugadoresAdentro = new Set();
+    contadorColores = 0;
   }
 
-  respawnEquipo() {
-    if (this.nivelSuperado) return;
-    this.scene.restart();
+  crearTexturaNucleo() {
+    if (this.textures.exists("nucleo")) return;
+    const canvas = this.textures.createCanvas("nucleo", 30, 30);
+    const ctx = canvas.context;
+    ctx.fillStyle = "#d2dae2";
+    ctx.fillRect(5, 0, 20, 30);
+    ctx.fillStyle = "#0be881";
+    ctx.fillRect(8, 5, 14, 20);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(12, 10, 6, 10);
+    canvas.refresh();
   }
 
-  agarrarLlave(a, b) {
-    if (this.equipoTieneLlave) return;
-    const jSprite = a.texture.key === "player" ? a : b;
-    const lSprite = a.texture.key === "nucleo" ? a : b;
-    this.equipoTieneLlave = true;
-    this.jugadorConLlaveId = jSprite.getData("id");
-    lSprite.setVisible(false).body.enable = false;
+  crearTexturaJugador() {
+    if (this.textures.exists("player")) return;
+    const canvas = this.textures.createCanvas("player", 40, 40);
+    const ctx = canvas.context;
+    ctx.fillStyle = "#222222"; 
+    ctx.fillRect(0, 0, 40, 40);
+    ctx.fillStyle = "#ffffff"; 
+    ctx.fillRect(5, 8, 30, 12);
+    canvas.refresh();
   }
 
-  victoria() {
-    if (this.nivelSuperado) return;
-    this.nivelSuperado = true;
-    this.plataformas.clear(true, true);
-    this.cajas.clear(true, true);
-    
-    const msj = nivelActual < CONFIG.TOTAL_NIVELES ? `¡SECTOR BYPASSEADO!\nSiguiente sector...` : `¡HACKEO EXITOSO! 🎉`;
-    this.txtVictoria.setText(msj).setVisible(true);
+  crearTextura(key, w, h) {
+    if (this.textures.exists(key)) return; 
+    const canvas = this.textures.createCanvas(key, w, h);
+    if (!canvas) return;
+    const ctx = canvas.context;
 
-    this.time.delayedCall(CONFIG.TIEMPO_VICTORIA, () => {
-      if (nivelActual < CONFIG.TOTAL_NIVELES) nivelActual++;
-      else nivelActual = 1;
-      this.scene.restart(); 
-    });
-  }
-
-  update() {
-    if (!this.jugadoresSprites || this.nivelSuperado) return;
-    const jugadores = Object.entries(this.jugadoresSprites);
-    const totalJugadores = jugadores.length;
-    if (totalJugadores === 0) return;
-
-    const afuera = jugadores.filter(([, j]) => !j.adentro);
-    if (afuera.length > 0) {
-      const sumaX = afuera.reduce((s, [, j]) => s + j.sprite.x, 0);
-      const mapAncho = obtenerMapaActual()[0].length * CONFIG.TAMANO_BLOQUE;
-      const targetX = Phaser.Math.Clamp(sumaX / afuera.length - 400, 0, mapAncho - 800);
-      this.cameras.main.scrollX += (targetX - this.cameras.main.scrollX) * 0.12;
-    }
-
-    if (this.equipoTieneLlave && this.llave && this.llave.visible && !this.puertaAbierta) {
-      const portador = this.jugadoresSprites[this.jugadorConLlaveId];
-      if (portador && !portador.adentro) this.llave.setPosition(portador.sprite.x, portador.sprite.y - 35);
-    }
-
-    this.cajas.getChildren().forEach(caja => {
-      let empujeDerecha = 0;
-      let empujeIzquierda = 0;
-
-      for (const [id, j] of jugadores) {
-        const p = j.sprite;
-        if (p.body.touching.right && caja.body.touching.left && j.controles.right) empujeDerecha++;
-        if (p.body.touching.left && caja.body.touching.right && j.controles.left) empujeIzquierda++;
-      }
-
-      if (empujeDerecha >= 2) {
-        caja.setVelocityX(100);
-      } else if (empujeIzquierda >= 2) {
-        caja.setVelocityX(-100);
-      } else {
-        caja.setVelocityX(0);
-      }
-    });
-
-    let algunBotonPisado = false; 
-    this.botones.getChildren().forEach(btn => {
-      let pisado = false;
-      this.cajas.getChildren().forEach(caja => {
-        if (Phaser.Geom.Intersects.RectangleToRectangle(caja.getBounds(), btn.getBounds())) {
-          pisado = true;
-        }
-      });
+    if (key === "ground") {
+      ctx.fillStyle = "#1e272e"; 
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#ff3f34";
+      ctx.fillRect(0, 0, w, 2); ctx.fillRect(0, h - 2, w, 2);
+      ctx.fillRect(0, 0, 2, h); ctx.fillRect(w - 2, 0, 2, h);
+    } 
+    else if (key === "water") {
+      ctx.fillStyle = "#0a0a0a"; 
+      ctx.fillRect(0, 0, w, h);
       
-      if (pisado) {
-        btn.setTint(0x777777); 
-        algunBotonPisado = true;
-      } else {
-        btn.clearTint();
-      }
-    });
+      ctx.fillStyle = "#39ff14"; 
+      ctx.fillRect(0, 12, w, h - 12);
+      
+      ctx.fillStyle = "#ccff00";
+      ctx.fillRect(0, 12, w, 4);
 
-    this.puentes.getChildren().forEach(pte => {
-      if (algunBotonPisado) {
-        pte.body.enable = true; pte.setAlpha(1);
-      } else {
-        pte.body.enable = false; pte.setAlpha(0.2);
-      }
-    });
-
-    for (const [id, j] of jugadores) {
-      const p = j.sprite;
-      if (j.adentro) {
-        p.setPosition(this.puerta.x, this.puerta.y).setVelocity(0, 0);
-        p.body.allowGravity = false;
-        if (j.controles.down) {
-          j.adentro = false; p.setVisible(true); p.body.allowGravity = true;
-          this.jugadoresAdentro.delete(id);
-        }
-        continue; 
-      }
-
-      if (j.controles.left) p.setAccelerationX(-2500);
-      else if (j.controles.right) p.setAccelerationX(2500);
-      else p.setAccelerationX(0);
-
-      if (j.controles.jump && p.body.blocked.down) {
-        if (this.equipoTieneLlave && this.jugadorConLlaveId === id) {
-        } else {
-          p.setVelocityY(-CONFIG.SALTO_FUERZA);
-        }
-        j.controles.jump = false;
-      }
-
-      if (this.puerta) {
-        const dist = Math.abs(p.x - this.puerta.x) < 40 && Math.abs(p.y - this.puerta.y) < 60;
-        if (dist) {
-          if (!this.puertaAbierta && this.equipoTieneLlave) {
-            this.puertaAbierta = true; this.puerta.setTexture("doorOpen").refreshBody();
-          }
-          if (this.puertaAbierta && !j.adentro) {
-            if (j.controles.up && !j.upPressedLastFrame) {
-              j.adentro = true; p.setVisible(false); p.body.allowGravity = false; p.setVelocity(0,0);
-              this.jugadoresAdentro.add(id);
-            }
-            j.upPressedLastFrame = j.controles.up;
-          }
-        } else { j.upPressedLastFrame = false; }
-      }
+      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+      
+      ctx.beginPath(); 
+      ctx.arc(15, 22, 3, 0, Math.PI * 2); 
+      ctx.fill();
+      
+      ctx.beginPath(); 
+      ctx.arc(35, 32, 4, 0, Math.PI * 2); 
+      ctx.fill();
+      
+      ctx.beginPath(); 
+      ctx.arc(22, 42, 2, 0, Math.PI * 2); 
+      ctx.fill();
     }
-
-    if (this.puertaAbierta && totalJugadores > 0 && this.jugadoresAdentro.size >= totalJugadores) {
-      this.victoria();
+    else if (key === "door") {
+      ctx.fillStyle = "#485460"; 
+      ctx.fillRect(5, 5, 40, 75);
+      ctx.fillStyle = "#1e272e"; 
+      ctx.fillRect(10, 10, 30, 70);
+      ctx.fillStyle = "#ff3f34";
+      ctx.fillRect(15, 15, 20, 5);
+    } 
+    else if (key === "doorOpen") {
+      ctx.fillStyle = "#485460"; 
+      ctx.fillRect(5, 5, 40, 75);
+      ctx.fillStyle = "#000000"; 
+      ctx.fillRect(10, 10, 30, 70);
+      ctx.fillStyle = "#0be881";
+      ctx.fillRect(15, 15, 20, 5);
+    } 
+    else if (key === "button") {
+      ctx.fillStyle = "#333"; 
+      ctx.fillRect(5, 35, 40, 15);
+      ctx.fillStyle = "#ffdd59"; 
+      ctx.fillRect(10, 30, 30, 5);
     }
+    else if (key === "bridge") {
+      ctx.fillStyle = "rgba(15, 185, 177, 0.3)";
+      ctx.fillRect(0, 5, w, 10);
+      ctx.fillStyle = "#0fb9b1"; 
+      ctx.fillRect(0, 3, w, 2);
+      ctx.fillRect(0, 15, w, 2);
+    }
+    else if (key === "trampoline") {
+      ctx.fillStyle = "#222"; 
+      ctx.fillRect(5, 30, 40, 20);
+      ctx.fillStyle = "#0be881"; 
+      ctx.fillRect(10, 25, 30, 5);
+    }
+    else if (key === "caja") {
+      ctx.fillStyle = "#808e9b"; 
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#1e272e";
+      ctx.fillRect(2, 2, w-4, h-4);
+      ctx.fillStyle = "#ffd32a";
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(w, h); ctx.lineWidth=8; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(w,0); ctx.lineTo(0, h); ctx.lineWidth=8; ctx.stroke();
+    }
+    canvas.refresh();
   }
 }
 
